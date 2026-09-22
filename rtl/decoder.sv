@@ -36,6 +36,30 @@ case (opcode)
         always_comb begin
             reg_write = 1;
             mem_write = 0;
+
+            case (func3)
+                F3_ADD_SUB: begin
+                    case (funct7)
+                        F7_ADD: alu_control = ALU_ADD;
+                        F7_SUB: alu_control = ALU_SUB;
+                    endcase
+                end
+
+                F3_XOR: alu_control = ALU_XOR;
+                F3_OR: alu_control = ALU_OR;
+                F3_AND: alu_control = ALU_AND;
+                F3_SLL: alu_control = ALU_SLL;
+
+                F3_SRL_SRA: begin
+                    case (funct7): begin
+                        F7_SRL: alu_control = ALU_SRL;
+                        F7_SRA: alu_control = ALU_SRA;
+                    end
+                end
+
+                F3_SLT: alu_control = ALU_SLT;
+                F3_SLTU: alu_control = ALU_SLUTU;
+            endcase
         end
     end
     OPCODE_I_TYPE_ARITH: begin
