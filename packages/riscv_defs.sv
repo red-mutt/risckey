@@ -27,15 +27,16 @@ package riscv_defs;
         ALU_SRA = 4'b1001
     } alu_control_t;
 
-    typedef enum logic [3:0] {
-        F3_ADD_SUB = 4'h0,
-        F3_XOR = 4'h4,
-        F3_OR = 4'h6,
-        F3_AND = 4'h7,
-        F3_SLL = 4'h1,
-        F3_SRL_SRA = 4'h5,
-        F3_SLT = 4'h2,
-        F3_SLTU = 4'h3
+    //used for R and I arithmetic
+    typedef enum logic [1:0] {
+        F3_ADD_SUB = 2'h0,
+        F3_XOR = 2'h4,
+        F3_OR = 2'h6,
+        F3_AND = 2'h7,
+        F3_SLL = 2'h1,
+        F3_SRL_SRA = 2'h5,
+        F3_SLT = 2'h2,
+        F3_SLTU = 2'h3
     } funct3_r_t
 
     typedef enum logic [7:0] {

@@ -36,6 +36,7 @@ case (opcode)
         always_comb begin
             reg_write = 1;
             mem_write = 0;
+            alu_src_immediate = 0;
 
             case (func3)
                 F3_ADD_SUB: begin
@@ -68,6 +69,33 @@ case (opcode)
         assign funct3 = instruction_input[14:12];
         assign rs1 = instruction_input[19:15];
         assign imm[11:0] = instruction_input[31:20];
+
+        always_comb
+            mem_write = 0;
+            reg_write = 1;
+            alu_src_immediate = 1;
+
+            case (funct3)
+                F3_ADD_SUB: alu_control = ALU_ADD; //Just add, no subbing (reused definition)
+                F3_XOR: alu_control = ALU_XOR;
+                F3_OR: alu_control = ALU_OR;
+                F3_AND: alu_control = ALU_AND;
+                F3_SLL: alu_control = ALU_SLL;
+
+                F3_SRL_SRA: begin
+                    case(imm[11:5])
+                        //both definitions here are reused and as you can see
+                        //aren't actually F7
+                        F7_SRL: alu_control = ALU_SRL;
+                        F7_SRA: alu_control ALU_SRA;
+                    endcase
+                end
+
+                F3_SLT: alu_control = ALU_SLT;
+                F3_SLTU: alu_control = ALU_SLTU;
+            endcase
+        end
+
     end
     OPCODE_I_TYPE_LOAD: begin
         // I loading
