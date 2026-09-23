@@ -11,7 +11,8 @@ module decoder (
 
     // flags for the instruction
     output logic mem_write,
-    output logic mem_read, 
+    output logic mem_read,
+    output logic [1:0] mem_size,
 
     output logic reg_write,
 
@@ -62,10 +63,10 @@ case (opcode)
                 F3_SLL: alu_control = ALU_SLL;
 
                 F3_SRL_SRA: begin
-                    case (funct7): begin
+                    case (funct7)
                         F7_SRL: alu_control = ALU_SRL;
                         F7_SRA: alu_control = ALU_SRA;
-                    end
+                    endcase
                 end
 
                 F3_SLT: alu_control = ALU_SLT;
@@ -80,7 +81,7 @@ case (opcode)
         assign rs1 = instruction_input[19:15];
         assign imm[11:0] = instruction_input[31:20];
 
-        always_comb
+        always_comb begin
             mem_write = 0;
             reg_write = 1;
             alu_src_immediate = 1;
@@ -97,7 +98,7 @@ case (opcode)
                         //both definitions here are reused and as you can see
                         //aren't actually F7
                         F7_SRL: alu_control = ALU_SRL;
-                        F7_SRA: alu_control ALU_SRA;
+                        F7_SRA: alu_control = ALU_SRA;
                     endcase
                 end
 
@@ -112,6 +113,23 @@ case (opcode)
         assign funct3 = instruction_input[14:12];
         assign rs1 = instruction_input[19:15];
         assign imm[11:0] = instruction_input[31:20];
+
+        always_comb begin
+            reg_write = 1;
+            mem_read = 1;
+            mem_write = 0;
+            result_src = SOURCE_MEM;
+            alu_src_immediate = 0;
+            
+            case (funct3)
+                LOAD_STORE_BYTE: mem_size = SIZE_BYTE;
+                LOAD_STORE_HALF: mem_size = SIZE_HALF;
+                LOAD_STORE_WORD: mem_size = SIZE_HALF;
+                LOAD_BYTEU: mem_size = SIZE_BYTE;
+                LOAD_HALFU: mem_size = SIZE_HALF;
+            endcase
+
+        end
     end
     OPCODE_S_TYPE: begin
         // S
@@ -120,6 +138,20 @@ case (opcode)
         assign rs1 = instruction_input[19:15];
         assign rs2 = instruction_input[24:20];
         assign imm[11:5] = instruction_input[31:25];
+
+        always_comb begin
+            reg_write = 0;
+            mem_read = 0;
+            mem_write = 1;
+            result_src = SOURCE_REG;
+            alu_src_immediate = 0;
+
+            case (funct3)
+                LOAD_STORE_BYTE: mem_size = SIZE_BYTE;
+                LOAD_STORE_HALF: mem_size = SIZE_HALF;
+                LOAD_STORE_WORD: mem_size = SIZE_HALF;
+            endcase
+        end
     end
     OPCODE_B_TYPE: begin
         // B
