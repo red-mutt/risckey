@@ -11,9 +11,19 @@ module decoder (
 
     // flags for the instruction
     output logic mem_write,
+    output logic mem_read, 
+
     output logic reg_write,
-    output logic alu_src_immediate
+
+    output logic [1:0] result_src, // where the result we want to write comes from
+
+    output logic [2:0] branch, //covers the type branch to be done
+    output logic jump,
+    output logic jump_reg,
+
+    output logic alu_src_immediate //alu src2 = imm
 );
+import riscv_defs::*;
 
 logic [6:0] opcode;
 
@@ -95,7 +105,6 @@ case (opcode)
                 F3_SLTU: alu_control = ALU_SLTU;
             endcase
         end
-
     end
     OPCODE_I_TYPE_LOAD: begin
         // I loading
@@ -163,6 +172,8 @@ case (opcode)
 endcase
 endmodule
 
+/*
+* Unused localparams, converted to enums in the package
 localparam logic [6:0] OPCODE_R_TYPE = 7'b0110011;
 localparam logic [6:0] OPCODE_I_TYPE_ARITH = 7'b0010011;
 localparam logic [6:0] OPCODE_I_TYPE_LOAD   = 7'b0000011;
@@ -173,3 +184,4 @@ localparam logic [6:0] OPCODE_I_TYPE_LINK = 7'b1100111;
 localparam logic [6:0] OPCODE_U_TYPE = 7'b0110111;
 localparam logic [6:0] OPCODE_U_TYPE_PC   = 7'b0010111;
 localparam logic [6:0] OPCODE_I_TYPE_ENV   = 7'b1110011;
+*/
