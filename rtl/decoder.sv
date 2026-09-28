@@ -22,7 +22,9 @@ module decoder (
     output logic jump,
     output logic jump_reg,
 
-    output logic alu_src_immediate //alu src2 = imm
+    output logic alu_src_immediate, //alu src2 = imm
+
+    output logic e_call
 );
 import riscv_defs::*;
 
@@ -162,8 +164,23 @@ case (opcode)
         assign rs2 = instruction_input[24:20];
         assign imm[10:5] = instruction_input[30:25];
         assign imm[12] = instruction_input[31];
-        
-        
+
+        always_comb begin
+            reg_write = 1;
+            mem_read = 0;
+            mem_write = 0;
+            result_src = SOURCE_REG;
+            alu_src_immediate = 0;
+
+            case (funct3) 
+                F3_EQ: branch = BRANCH_EQ;
+                F3_NE: branch = BRANCH_NE;
+                F3_LT: branch = BRANCH_LT;
+                F3_GE: branch = BRANCH_GE;
+                F3_LTU: branch = BRANCH_LTU;
+                F3_GEU: branch = BRANCH_GEU;
+            endcase 
+        end        
     end
     OPCODE_J_TYPE_LINK: begin
         // J (Jump and link)
@@ -173,6 +190,15 @@ case (opcode)
         assign imm[10:1] = instruction_input[30:21];
         assign imm[20] = instruction_input[31];
 
+        always_comb begin
+            reg_write = 1;
+            mem_read = 0;
+            mem_write = 0;
+            result_src = SOURCE_REG;
+            alu_src_immediate = 0;
+            jump = 1;
+        end
+
     end
     OPCODE_I_TYPE_LINK: begin
         // I (Jump and link reg)
@@ -180,16 +206,45 @@ case (opcode)
         assign funct3 = instruction_input[14:12];
         assign rs1 = instruction_input[19:15];
         assign imm[11:0] = instruction_input[31:20];
+
+        always_comb begin
+            reg_write = 1;
+            mem_read = 0;
+            mem_write = 0;
+            result_src = SOURCE_REG;
+            alu_src_immediate = 0;
+            jump_reg = 1;
+        end
     end
     OPCODE_U_TYPE: begin
         // U (Load Upper Imm)
         assign rd = instruction_input[11:7];
         assign imm[31:12] = instruction_input[31:12];
+
+        always_comb begin
+            reg_write = 1;
+            mem_read = 0;
+            mem_write = 0;
+            result_src = SOURCE_ALU;
+            alu_src_immediate = 1;
+            jump_reg = 0;
+            alu_control = ALU_SLL;
+        end
     end
     OPCODE_U_TYPE_PC: begin
         // U (Add upper imm to pc)
         assign rd = instruction_input[11:7];
         assign imm[31:12] = instruction_input[31:12];
+
+        always_comb begin
+            reg_write = 1;
+            mem_read = 0;
+            mem_write = 0;
+            result_src = SOURCE_ALU;
+            alu_src_immediate = 1;
+            jump_reg = 0;
+            alu_control = ALU_SLL;
+        end
     end
     OPCODE_I_TYPE_ENV: begin
         // I (Environment)
@@ -197,6 +252,18 @@ case (opcode)
         assign funct3 = instruction_input[14:12];
         assign rs1 = instruction_input[19:15];
         assign imm[11:0] = instruction_input[31:20];
+
+        always_comb begin
+            // transfer controll to OS or debugger, based in imm, not that
+            // important i don't think.
+            reg_write = 0;
+            mem_read = 0;
+            mem_write = 0;
+            result_src = SOURCE_ALU;
+            alu_src_immediate = 0;
+            jump_reg = 0;
+            alu_control = 0;
+        end
     end
     default: begin
         // Unsuported instruction
