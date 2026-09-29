@@ -47,6 +47,15 @@ package riscv_defs;
         LOAD_HALFU = 2'h5
     } funct3_mem_t;
 
+    typedef enum logic [2:0] {
+        F3_EQ = 3'h0,
+        F3_NE = 3'h1,
+        F3_LT = 3'h4,
+        F3_GE = 3'h5,
+        F3_LTU = 3'h6,
+        F3_GEU = 3'h7
+    } funct3_b_t;
+
     typedef enum logic [7:0] {
         F7_ADD = 8'h00,
         F7_SUB = 8'h20
@@ -76,7 +85,7 @@ package riscv_defs;
         BRANCH_GE = 3'b011,
         BRANCH_LTU = 3'b110,
         BRANCH_GEU = 3'b111 
-    } branch_t
+    } branch_t;
 
 
 
