@@ -35,18 +35,17 @@ logic [6:0] funct7;
 
 always_comb begin
     opcode = instruction_input[6:0];
-end
 
-case (opcode) 
-    OPCODE_R_TYPE: begin
-        // R
-        assign rd = instruction_input[11:7];
-        assign funct3 = instruction_input[14:12];
-        assign rs1 = instruction_input[19:15];
-        assign rs2 = instruction_input[24:20];
-        assign funct7 = instruction_input[31:25];
 
-        always_comb begin
+    case (opcode) 
+        OPCODE_R_TYPE: begin
+            // R
+            rd = instruction_input[11:7];
+            funct3 = instruction_input[14:12];
+            rs1 = instruction_input[19:15];
+            rs2 = instruction_input[24:20];
+            funct7 = instruction_input[31:25];
+
             reg_write = 1;
             mem_write = 0;
             alu_src_immediate = 0;
@@ -75,15 +74,13 @@ case (opcode)
                 F3_SLTU: alu_control = ALU_SLUTU;
             endcase
         end
-    end
-    OPCODE_I_TYPE_ARITH: begin
-        // I arithmetic
-        assign rd = instruction_input[11:7];
-        assign funct3 = instruction_input[14:12];
-        assign rs1 = instruction_input[19:15];
-        assign imm[11:0] = instruction_input[31:20];
+        OPCODE_I_TYPE_ARITH: begin
+            // I arithmetic
+            rd = instruction_input[11:7];
+            funct3 = instruction_input[14:12];
+            rs1 = instruction_input[19:15];
+            imm[11:0] = instruction_input[31:20];
 
-        always_comb begin
             mem_write = 0;
             reg_write = 1;
             alu_src_immediate = 1;
@@ -108,15 +105,13 @@ case (opcode)
                 F3_SLTU: alu_control = ALU_SLTU;
             endcase
         end
-    end
-    OPCODE_I_TYPE_LOAD: begin
-        // I loading
-        assign rd = instruction_input[11:7];
-        assign funct3 = instruction_input[14:12];
-        assign rs1 = instruction_input[19:15];
-        assign imm[11:0] = instruction_input[31:20];
+        OPCODE_I_TYPE_LOAD: begin
+            // I loading
+            rd = instruction_input[11:7];
+            funct3 = instruction_input[14:12];
+            rs1 = instruction_input[19:15];
+            imm[11:0] = instruction_input[31:20];
 
-        always_comb begin
             reg_write = 1;
             mem_read = 1;
             mem_write = 0;
@@ -132,16 +127,14 @@ case (opcode)
             endcase
 
         end
-    end
-    OPCODE_S_TYPE: begin
-        // S
-        assign imm[4:0] = instruction_input[11:7];
-        assign funct3 = instruction_input[14:12];
-        assign rs1 = instruction_input[19:15];
-        assign rs2 = instruction_input[24:20];
-        assign imm[11:5] = instruction_input[31:25];
+        OPCODE_S_TYPE: begin
+            // S
+            imm[4:0] = instruction_input[11:7];
+            funct3 = instruction_input[14:12];
+            rs1 = instruction_input[19:15];
+            rs2 = instruction_input[24:20];
+            imm[11:5] = instruction_input[31:25];
 
-        always_comb begin
             reg_write = 0;
             mem_read = 0;
             mem_write = 1;
@@ -154,18 +147,16 @@ case (opcode)
                 LOAD_STORE_WORD: mem_size = SIZE_HALF;
             endcase
         end
-    end
-    OPCODE_B_TYPE: begin
-        // B
-        assign imm[11] = instruction_input[7];
-        assign imm[4:1] = instruction_input[11:8];
-        assign funct3 = instruction_input[14:12];
-        assign rs1 = instruction_input[19:15];
-        assign rs2 = instruction_input[24:20];
-        assign imm[10:5] = instruction_input[30:25];
-        assign imm[12] = instruction_input[31];
+        OPCODE_B_TYPE: begin
+            // B
+            imm[11] = instruction_input[7];
+            imm[4:1] = instruction_input[11:8];
+            funct3 = instruction_input[14:12];
+            rs1 = instruction_input[19:15];
+            rs2 = instruction_input[24:20];
+            imm[10:5] = instruction_input[30:25];
+            imm[12] = instruction_input[31];
 
-        always_comb begin
             reg_write = 1;
             mem_read = 0;
             mem_write = 0;
@@ -180,17 +171,15 @@ case (opcode)
                 F3_LTU: branch = BRANCH_LTU;
                 F3_GEU: branch = BRANCH_GEU;
             endcase 
-        end        
-    end
-    OPCODE_J_TYPE_LINK: begin
-        // J (Jump and link)
-        assign rd = instruction_input[11:7];
-        assign imm[19:12] = instruction_input[19:12];
-        assign imm[11] = instruction_input[20];
-        assign imm[10:1] = instruction_input[30:21];
-        assign imm[20] = instruction_input[31];
+        end
+        OPCODE_J_TYPE_LINK: begin
+            // J (Jump and link)
+            rd = instruction_input[11:7];
+            imm[19:12] = instruction_input[19:12];
+            imm[11] = instruction_input[20];
+            imm[10:1] = instruction_input[30:21];
+            imm[20] = instruction_input[31];
 
-        always_comb begin
             reg_write = 1;
             mem_read = 0;
             mem_write = 0;
@@ -198,16 +187,13 @@ case (opcode)
             alu_src_immediate = 0;
             jump = 1;
         end
+        OPCODE_I_TYPE_LINK: begin
+            // I (Jump and link reg)
+            rd = instruction_input[11:7];
+            funct3 = instruction_input[14:12];
+            rs1 = instruction_input[19:15];
+            imm[11:0] = instruction_input[31:20];
 
-    end
-    OPCODE_I_TYPE_LINK: begin
-        // I (Jump and link reg)
-        assign rd = instruction_input[11:7];
-        assign funct3 = instruction_input[14:12];
-        assign rs1 = instruction_input[19:15];
-        assign imm[11:0] = instruction_input[31:20];
-
-        always_comb begin
             reg_write = 1;
             mem_read = 0;
             mem_write = 0;
@@ -215,13 +201,11 @@ case (opcode)
             alu_src_immediate = 0;
             jump_reg = 1;
         end
-    end
-    OPCODE_U_TYPE: begin
-        // U (Load Upper Imm)
-        assign rd = instruction_input[11:7];
-        assign imm[31:12] = instruction_input[31:12];
+        OPCODE_U_TYPE: begin
+            // U (Load Upper Imm)
+            assign rd = instruction_input[11:7];
+            assign imm[31:12] = instruction_input[31:12];
 
-        always_comb begin
             reg_write = 1;
             mem_read = 0;
             mem_write = 0;
@@ -230,13 +214,11 @@ case (opcode)
             jump_reg = 0;
             alu_control = ALU_SLL;
         end
-    end
-    OPCODE_U_TYPE_PC: begin
-        // U (Add upper imm to pc)
-        assign rd = instruction_input[11:7];
-        assign imm[31:12] = instruction_input[31:12];
+        OPCODE_U_TYPE_PC: begin
+            // U (Add upper imm to pc)
+            assign rd = instruction_input[11:7];
+            assign imm[31:12] = instruction_input[31:12];
 
-        always_comb begin
             reg_write = 1;
             mem_read = 0;
             mem_write = 0;
@@ -245,15 +227,13 @@ case (opcode)
             jump_reg = 0;
             alu_control = ALU_SLL;
         end
-    end
-    OPCODE_I_TYPE_ENV: begin
-        // I (Environment)
-        assign rd = instruction_input[11:7];
-        assign funct3 = instruction_input[14:12];
-        assign rs1 = instruction_input[19:15];
-        assign imm[11:0] = instruction_input[31:20];
+        OPCODE_I_TYPE_ENV: begin
+            // I (Environment)
+            assign rd = instruction_input[11:7];
+            assign funct3 = instruction_input[14:12];
+            assign rs1 = instruction_input[19:15];
+            assign imm[11:0] = instruction_input[31:20];
 
-        always_comb begin
             // transfer controll to OS or debugger, based in imm, not that
             // important i don't think.
             reg_write = 0;
@@ -264,11 +244,11 @@ case (opcode)
             jump_reg = 0;
             alu_control = 0;
         end
-    end
-    default: begin
-        // Unsuported instruction
-    end
-endcase
+        default: begin
+            // Unsuported instruction
+        end
+    endcase
+end
 endmodule
 
 /*
