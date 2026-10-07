@@ -66,10 +66,11 @@ package riscv_defs;
         F7_SRA = 8'h20
     } funct7_r_shifts;
 
-    typedef enum logic [1:0] {
-        SOURCE_ALU = 2'b01,
-        SOURCE_MEM = 2'b10,
-        SOURCE_REG = 2'b11
+    typedef enum logic [2:0] {
+        SOURCE_ALU = 3'b001,
+        SOURCE_MEM = 3'b010,
+        SOURCE_REG = 3'b011,
+        SOURCE_PC_PLUS_4 = 3'b110
     } write_source_t;
 
     typedef enum logic [1:0] {

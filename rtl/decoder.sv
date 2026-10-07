@@ -24,7 +24,9 @@ module decoder (
 
     output logic alu_src_immediate, //alu src2 = imm
 
-    output logic e_call
+    output logic e_call,
+
+    output logic alu_src_pc
 );
 import riscv_defs::*;
 
@@ -35,6 +37,31 @@ logic [6:0] funct7;
 
 always_comb begin
     opcode = instruction_input[6:0];
+
+    rd = '0;
+    rs1 = '0;
+    rs2 = '0;
+    imm = '0;
+
+    alu_control = ALU_ADD;
+
+    mem_write = 0;
+    mem_read = 0;
+    mem_size = SIZE_WORD;
+
+    reg_write = 0;
+    result_src = SOURCE_ALU;
+
+    alu_src_immediate = 0;
+
+    branch = BRANCH_NONE;
+    jump = 0;
+    jump_reg = 0;
+
+    alu_src_pc = 0;
+
+    e_call = 0;
+
 
 
     case (opcode) 
@@ -79,7 +106,7 @@ always_comb begin
             rd = instruction_input[11:7];
             funct3 = instruction_input[14:12];
             rs1 = instruction_input[19:15];
-            imm[11:0] = instruction_input[31:20];
+            imm = {{20{instruction_input[31]}}, instruction_input[31:20]};
 
             mem_write = 0;
             reg_write = 1;
@@ -110,18 +137,19 @@ always_comb begin
             rd = instruction_input[11:7];
             funct3 = instruction_input[14:12];
             rs1 = instruction_input[19:15];
-            imm[11:0] = instruction_input[31:20];
+            imm = {{20{instruction_input[31]}}, instruction_input[31:20]};
 
             reg_write = 1;
             mem_read = 1;
             mem_write = 0;
             result_src = SOURCE_MEM;
-            alu_src_immediate = 0;
+            alu_src_immediate = 1;
+            alu_control = ALU_ADD;
             
             case (funct3)
                 LOAD_STORE_BYTE: mem_size = SIZE_BYTE;
                 LOAD_STORE_HALF: mem_size = SIZE_HALF;
-                LOAD_STORE_WORD: mem_size = SIZE_HALF;
+                LOAD_STORE_WORD: mem_size = SIZE_WORD;
                 LOAD_BYTEU: mem_size = SIZE_BYTE;
                 LOAD_HALFU: mem_size = SIZE_HALF;
             endcase
@@ -129,11 +157,13 @@ always_comb begin
         end
         OPCODE_S_TYPE: begin
             // S
-            imm[4:0] = instruction_input[11:7];
             funct3 = instruction_input[14:12];
             rs1 = instruction_input[19:15];
             rs2 = instruction_input[24:20];
-            imm[11:5] = instruction_input[31:25];
+
+            imm = {{20{instruction_input[31]}},
+                    instruction_input[31:25],
+                    instruction_input[11:7]};
 
             reg_write = 0;
             mem_read = 0;
@@ -144,20 +174,25 @@ always_comb begin
             case (funct3)
                 LOAD_STORE_BYTE: mem_size = SIZE_BYTE;
                 LOAD_STORE_HALF: mem_size = SIZE_HALF;
-                LOAD_STORE_WORD: mem_size = SIZE_HALF;
+                LOAD_STORE_WORD: mem_size = SIZE_WORD;
             endcase
         end
         OPCODE_B_TYPE: begin
             // B
-            imm[11] = instruction_input[7];
-            imm[4:1] = instruction_input[11:8];
             funct3 = instruction_input[14:12];
             rs1 = instruction_input[19:15];
             rs2 = instruction_input[24:20];
-            imm[10:5] = instruction_input[30:25];
-            imm[12] = instruction_input[31];
 
-            reg_write = 1;
+            imm = {
+                {19{instruction_input[31]}},
+                instruction_input[31],
+                instruction_input[7],
+                instruction_input[30:25],
+                instruction_input[11:8],
+                1'b0
+            };
+
+            reg_write = 0;
             mem_read = 0;
             mem_write = 0;
             result_src = SOURCE_REG;
@@ -175,15 +210,20 @@ always_comb begin
         OPCODE_J_TYPE_LINK: begin
             // J (Jump and link)
             rd = instruction_input[11:7];
-            imm[19:12] = instruction_input[19:12];
-            imm[11] = instruction_input[20];
-            imm[10:1] = instruction_input[30:21];
-            imm[20] = instruction_input[31];
+
+            imm = {
+                {11{instruction_input[31]}},
+                instruction_input[31],
+                instruction_input[19:12],
+                instruction_input[20],
+                instruction_input[30:21],
+                1'b0
+            };
 
             reg_write = 1;
             mem_read = 0;
             mem_write = 0;
-            result_src = SOURCE_REG;
+            result_src = SOURCE_PC_PLUS_4;
             alu_src_immediate = 0;
             jump = 1;
         end
@@ -192,19 +232,18 @@ always_comb begin
             rd = instruction_input[11:7];
             funct3 = instruction_input[14:12];
             rs1 = instruction_input[19:15];
-            imm[11:0] = instruction_input[31:20];
-
+            imm = {{20{instruction_input[31]}}, instruction_input[31:20]};
             reg_write = 1;
             mem_read = 0;
             mem_write = 0;
-            result_src = SOURCE_REG;
+            result_src = SOURCE_PC_PLUS_4;
             alu_src_immediate = 0;
             jump_reg = 1;
         end
         OPCODE_U_TYPE: begin
             // U (Load Upper Imm)
-            assign rd = instruction_input[11:7];
-            assign imm[31:12] = instruction_input[31:12];
+            rd = instruction_input[11:7];
+            imm[31:12] = instruction_input[31:12];
 
             reg_write = 1;
             mem_read = 0;
@@ -216,8 +255,8 @@ always_comb begin
         end
         OPCODE_U_TYPE_PC: begin
             // U (Add upper imm to pc)
-            assign rd = instruction_input[11:7];
-            assign imm[31:12] = instruction_input[31:12];
+            rd = instruction_input[11:7];
+            imm[31:12] = instruction_input[31:12];
 
             reg_write = 1;
             mem_read = 0;
@@ -226,13 +265,16 @@ always_comb begin
             alu_src_immediate = 1;
             jump_reg = 0;
             alu_control = ALU_SLL;
+
+            //used primarily for auipc
+            alu_src_pc = 1;
         end
         OPCODE_I_TYPE_ENV: begin
             // I (Environment)
-            assign rd = instruction_input[11:7];
-            assign funct3 = instruction_input[14:12];
-            assign rs1 = instruction_input[19:15];
-            assign imm[11:0] = instruction_input[31:20];
+            rd = instruction_input[11:7];
+            funct3 = instruction_input[14:12];
+            rs1 = instruction_input[19:15];
+            imm[11:0] = {{20{instruction_input[31]}}, instruction_input[31:20]};
 
             // transfer controll to OS or debugger, based in imm, not that
             // important i don't think.
